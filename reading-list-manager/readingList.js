@@ -1,53 +1,111 @@
 // Place here the file operation functions for loading and saving books
+import fs from 'fs';
+import chalk from 'chalk';
 
-function loadBooks() {
-  // TODO: Implement this function
-  // Read from books.json
-  // Handle missing file (create empty array)
-  // Handle invalid JSON (notify user, use empty array)
-  // Use try-catch for error handling
+const BOOKS_FILE = 'books.json';
+
+export function loadBooks() {
+  try {
+    // Check if file exists first
+    if (!fs.existsSync(BOOKS_FILE)) {
+      console.log('No books.json found, starting empty');
+      return [];
+    }
+    
+    // Read and parse the file
+    const data = fs.readFileSync(BOOKS_FILE, 'utf8');
+    const books = JSON.parse(data);
+    
+    // Make sure it's an array
+    if (Array.isArray(books)) {
+      return books;
+    } else {
+      console.log('books.json is not valid, starting empty');
+      return [];
+    }
+  } catch (error) {
+    console.log('Error loading books:', error.message);
+    return [];
+  }
 }
 
-function saveBooks(books) {
-  // TODO: Implement this function
-  // Write books array to books.json
-  // Use try-catch for error handling
+export function saveBooks(books) {
+  try {
+    fs.writeFileSync(BOOKS_FILE, JSON.stringify(books, null, 2));
+  } catch (error) {
+    console.log('Error saving books:', error.message);
+  }
 }
 
-function addBook(book) {
-  // TODO: Implement this function
+export function addBook(bookInfo) {
+  const books = loadBooks();
+  const newId = books.length + 1;
+  const newBook = {
+    id: newId,
+    title: bookInfo.title,
+    author: bookInfo.author,
+    genre: bookInfo.genre,
+    read: false
+  };
+  books.push(newBook);
+  saveBooks(books);
+  return newBook;
 }
 
-function getUnreadBooks() {
-  // TODO: Implement this function using filter()
+export function getUnreadBooks() {
+  // TODO: Use filter()
+  const books = loadBooks();
+  return books.filter(book => !book.read);
 }
 
-function getBooksByGenre(genre) {
-  // TODO: Implement this function using filter()
+export function getBooksByGenre(genre) {
+  // TODO: Use filter()
+  const books = loadBooks();
+  return books.filter(book => book.genre === genre);
 }
 
-function markAsRead(id) {
-  // TODO: Implement this function using map()
+export function markAsRead(id) {
+  // TODO: Use map()
+  const books = loadBooks();
+  const newBooks = books.map(book => {
+    if (book.id === id) {
+      return { ...book, read: true };
+    }
+    return book;
+  });
+  saveBooks(newBooks);
+  return newBooks;
 }
 
-function getTotalBooks() {
-  // TODO: Implement this function using length
+export function getTotalBooks() {
+  // TODO: Use length
+  return loadBooks().length;
 }
 
-function hasUnreadBooks() {
-  // TODO: Implement this function using some()
+export function hasUnreadBooks() {
+  // TODO: Use some()
+  return loadBooks().some(book => !book.read);
 }
 
-function printAllBooks() {
-  // TODO: Implement this function
-  // Loop through and display with chalk
-  // Use green for read books, yellow for unread
-  // Use cyan for titles
+export function printAllBooks() {
+  // Loop with chalk colors
+  const books = loadBooks();
+  books.forEach(book => {
+    const symbol = book.read ? chalk.green('✓') : chalk.yellow('⚠');
+    const titleColor = chalk.cyan(book.title);
+    const status = book.read ? chalk.green('Read') : chalk.yellow('Unread');
+    
+    console.log(`${book.id}. ${titleColor} by ${book.author} (${book.genre}) ${symbol} ${status}`);
+  });
 }
 
-function printSummary() {
-  // TODO: Implement this function
-  // Show statistics with chalk
-  // Display total books, read count, unread count
-  // Use bold for stats
+export function printSummary() {
+  const books = loadBooks();
+  const readCount = books.filter(book => book.read).length;
+  const unreadCount = books.length - readCount;
+  
+  console.log(chalk.bold('\n📊 SUMMARY'));
+  console.log(chalk.bold(`Total: ${books.length}`));
+  console.log(chalk.green.bold(`Read: ${readCount}`));
+  console.log(chalk.yellow.bold(`Unread: ${unreadCount}`));
 }
